@@ -53,6 +53,10 @@
                 <i class="fas fa-chart-bar"></i>
                 <span>Analytics</span>
             </a>
+            <a href="#ai-planner" class="nav-item" data-section="ai-planner">
+                <i class="fas fa-robot"></i>
+                <span>AI Study Planner</span>
+            </a>
             <a href="#review" class="nav-item" data-section="review">
                 <i class="fas fa-clipboard-check"></i>
                 <span>Weekly Review</span>
@@ -383,6 +387,140 @@
                     <h3>Insights & Recommendations</h3>
                     <div id="insightsList" class="insights-list">
                         <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Study Planner Section -->
+        <section id="ai-plannerSection" class="content-section">
+            <div class="ai-planner-container">
+                <div class="ai-planner-header">
+                    <div>
+                        <h2><i class="fas fa-robot"></i> AI Study Planner</h2>
+                        <p>Get personalized study recommendations powered by AI</p>
+                    </div>
+                    <button class="btn-primary" id="generatePlanBtn">
+                        <i class="fas fa-magic"></i> Generate Study Plan
+                    </button>
+                </div>
+
+                <div class="card ai-input-section">
+                    <h3>Tell AI About Your Study Needs</h3>
+                    <form id="aiPlannerForm">
+                        <div class="form-group">
+                            <label>What subjects are you studying?</label>
+                            <input type="text" id="aiSubjects" placeholder="e.g., Math, Physics, English, History" required>
+                            <small>Separate subjects with commas</small>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Hours available per day</label>
+                                <input type="number" id="aiHoursPerDay" min="1" max="12" value="4" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Study duration preference</label>
+                                <select id="aiStudyDuration">
+                                    <option value="short">Short sessions (25-30 min)</option>
+                                    <option value="medium" selected>Medium sessions (45-60 min)</option>
+                                    <option value="long">Long sessions (90+ min)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>When are you most focused?</label>
+                                <select id="aiPeakTime">
+                                    <option value="early-morning">Early Morning (5-8 AM)</option>
+                                    <option value="morning" selected>Morning (8-12 PM)</option>
+                                    <option value="afternoon">Afternoon (12-5 PM)</option>
+                                    <option value="evening">Evening (5-9 PM)</option>
+                                    <option value="night">Night (9 PM-12 AM)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Main goal</label>
+                                <select id="aiMainGoal">
+                                    <option value="exam-prep">Exam Preparation</option>
+                                    <option value="homework">Complete Homework</option>
+                                    <option value="understanding">Deep Understanding</option>
+                                    <option value="review">Review & Retention</option>
+                                    <option value="balanced" selected>Balanced Learning</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Any specific challenges or preferences?</label>
+                            <textarea id="aiChallenges" rows="2" placeholder="e.g., I struggle with Math, prefer visual learning, need help staying motivated..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-primary btn-large">
+                            <i class="fas fa-brain"></i> Generate Personalized Plan
+                        </button>
+                    </form>
+                </div>
+
+                <div id="aiPlanOutput" class="ai-plan-output" style="display: none;">
+                    <div class="card">
+                        <div class="ai-plan-header">
+                            <h3><i class="fas fa-check-circle"></i> Your Personalized Study Plan</h3>
+                            <div class="ai-plan-actions">
+                                <button class="btn-outline btn-small" id="exportPlanBtn">
+                                    <i class="fas fa-download"></i> Export Plan
+                                </button>
+                                <button class="btn-outline btn-small" id="applyPlanBtn">
+                                    <i class="fas fa-calendar-plus"></i> Apply to Schedule
+                                </button>
+                            </div>
+                        </div>
+                        <div id="aiPlanContent" class="ai-plan-content">
+                            <!-- AI-generated plan will appear here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aiPlanLoading" class="ai-loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>AI is analyzing your study patterns and creating your personalized plan...</p>
+                    <small>This may take 10-20 seconds</small>
+                </div>
+
+                <div class="card ai-examples">
+                    <h3><i class="fas fa-lightbulb"></i> What the AI Will Analyze</h3>
+                    <div class="ai-features-grid">
+                        <div class="ai-feature">
+                            <i class="fas fa-clock"></i>
+                            <h4>Your Schedule</h4>
+                            <p>Finds optimal study times based on your availability</p>
+                        </div>
+                        <div class="ai-feature">
+                            <i class="fas fa-brain"></i>
+                            <h4>Cognitive Load</h4>
+                            <p>Balances difficult and easy subjects throughout the day</p>
+                        </div>
+                        <div class="ai-feature">
+                            <i class="fas fa-chart-line"></i>
+                            <h4>Past Performance</h4>
+                            <p>Learns from your Pomodoro sessions and completion rates</p>
+                        </div>
+                        <div class="ai-feature">
+                            <i class="fas fa-battery-three-quarters"></i>
+                            <h4>Energy Patterns</h4>
+                            <p>Schedules challenging tasks during your peak hours</p>
+                        </div>
+                        <div class="ai-feature">
+                            <i class="fas fa-graduation-cap"></i>
+                            <h4>Learning Style</h4>
+                            <p>Recommends techniques that match your preferences</p>
+                        </div>
+                        <div class="ai-feature">
+                            <i class="fas fa-sync-alt"></i>
+                            <h4>Spaced Repetition</h4>
+                            <p>Builds in review sessions for better retention</p>
+                        </div>
                     </div>
                 </div>
             </div>

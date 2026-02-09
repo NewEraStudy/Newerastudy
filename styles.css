@@ -3,10 +3,10 @@
    =========================== */
 :root {
     /* Primary Color Palette - Calming Focus Theme */
-    --primary: #ef4444;
+    --primary: #2563eb;
     --primary-dark: #1e40af;
     --primary-light: #60a5fa;
-    --primary: #8b5cf6;
+    --secondary: #06b6d4;
     --secondary-dark: #0891b2;
     --accent: #f59e0b;
     --accent-light: #fbbf24;
@@ -1401,6 +1401,205 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* ===========================
+   AI Study Planner
+   =========================== */
+.ai-planner-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.ai-planner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.ai-planner-header h2 {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.ai-planner-header h2 i {
+    color: var(--primary);
+    margin-right: var(--spacing-sm);
+}
+
+.ai-planner-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.ai-input-section {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-xl);
+}
+
+.ai-input-section h3 {
+    margin-bottom: var(--spacing-lg);
+}
+
+.ai-input-section small {
+    display: block;
+    margin-top: var(--spacing-xs);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.ai-plan-output {
+    margin-bottom: var(--spacing-xl);
+}
+
+.ai-plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--border);
+}
+
+.ai-plan-header h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--success);
+}
+
+.ai-plan-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.ai-plan-content {
+    line-height: 1.8;
+    color: var(--text-primary);
+}
+
+.ai-plan-content h4 {
+    color: var(--primary);
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.25rem;
+}
+
+.ai-plan-content ul, .ai-plan-content ol {
+    margin-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-plan-content li {
+    margin-bottom: var(--spacing-sm);
+}
+
+.ai-plan-content strong {
+    color: var(--primary);
+}
+
+.ai-plan-content p {
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-loading {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--bg-secondary);
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto var(--spacing-lg);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.ai-loading p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+}
+
+.ai-loading small {
+    color: var(--text-muted);
+}
+
+.ai-examples {
+    padding: var(--spacing-xl);
+}
+
+.ai-features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.ai-feature {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+}
+
+.ai-feature:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.ai-feature i {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-feature h4 {
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.ai-feature p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Schedule block in AI plan */
+.ai-schedule-block {
+    background: var(--bg-secondary);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+    border-left: 4px solid var(--primary);
+}
+
+.ai-schedule-time {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.ai-schedule-subject {
+    font-weight: 600;
+    margin: var(--spacing-xs) 0;
+}
+
+.ai-schedule-note {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* ===========================
    Responsive Design
    =========================== */
 @media (max-width: 1024px) {
@@ -1469,6 +1668,31 @@ input:focus, textarea:focus, select:focus {
     
     .calendar-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .ai-planner-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    
+    .ai-features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ai-plan-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    
+    .ai-plan-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .ai-plan-actions button {
+        width: 100%;
     }
 }
 

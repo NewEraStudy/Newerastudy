@@ -17,9 +17,7 @@
     // Initialization
     // ===========================
     function init() {
-        if (!checkAuthentication()) {
-            return;
-        }
+        checkAuthentication();
         loadUserData();
         setupEventListeners();
         setupTheme();
@@ -32,35 +30,55 @@
         const userStr = localStorage.getItem('currentUser');
         if (!userStr) {
             window.location.href = 'index.html';
-            return false;
+            return;
         }
         currentUser = JSON.parse(userStr);
         updateUserProfile();
-        return true;
     }
 
     // Load User Data
     function loadUserData() {
         const dataStr = localStorage.getItem(`userData_${currentUser.id}`);
         if (dataStr) {
-            userData = JSON.parse(dataStr);
-        } else {
-            // Initialize new user data
-            userData = {
-                schedule: [],
-                goals: [],
-                tasks: [],
-                decks: [],
-                pomodoroSessions: [],
-                reviews: [],
-                analytics: {
+            try {
+                userData = JSON.parse(dataStr);
+                // Ensure all required fields exist
+                if (!userData.pomodoroSessions) userData.pomodoroSessions = [];
+                if (!userData.schedule) userData.schedule = [];
+                if (!userData.goals) userData.goals = [];
+                if (!userData.tasks) userData.tasks = [];
+                if (!userData.decks) userData.decks = [];
+                if (!userData.reviews) userData.reviews = [];
+                if (!userData.analytics) userData.analytics = {
                     dailyStudyTime: [],
                     weeklyCompletionRate: [],
                     energyLevels: []
-                }
-            };
-            saveUserData();
+                };
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                initializeEmptyUserData();
+            }
+        } else {
+            initializeEmptyUserData();
         }
+        saveUserData(); // Save to ensure data exists
+    }
+
+    // Helper function to initialize empty user data
+    function initializeEmptyUserData() {
+        userData = {
+            schedule: [],
+            goals: [],
+            tasks: [],
+            decks: [],
+            pomodoroSessions: [],
+            reviews: [],
+            analytics: {
+                dailyStudyTime: [],
+                weeklyCompletionRate: [],
+                energyLevels: []
+            }
+        };
     }
 
     // Save User Data
@@ -97,7 +115,7 @@
 
     // Calculate Streak
     function calculateStreak() {
-        const sessions = userData.pomodoroSessions || [];
+        const sessions = userData?.pomodoroSessions || [];
         if (sessions.length === 0) return 0;
 
         let streak = 0;
@@ -106,12 +124,15 @@
 
         while (true) {
             const dateStr = currentDate.toISOString().split('T')[0];
-            const hasSession = sessions.some(s => s.date.startsWith(dateStr));
+            const hasSession = sessions.some(s => s.date && s.date.startsWith(dateStr));
             
             if (!hasSession) break;
             
             streak++;
             currentDate.setDate(currentDate.getDate() - 1);
+            
+            // Safety: prevent infinite loops
+            if (streak > 365) break;
         }
 
         return streak;
@@ -182,6 +203,9 @@
         // Flashcards
         setupFlashcardsListeners();
 
+        // AI Planner
+        setupAIPlannerListeners();
+
         // Review
         setupReviewListeners();
     }
@@ -219,6 +243,7 @@
                 pomodoro: 'Pomodoro Timer',
                 flashcards: 'Flashcards',
                 analytics: 'Analytics',
+                'ai-planner': 'AI Study Planner',
                 review: 'Weekly Review'
             };
             pageTitle.textContent = titles[section] || section;
@@ -252,6 +277,9 @@
             case 'analytics':
                 renderAnalytics();
                 break;
+            case 'ai-planner':
+                // AI Planner section is mostly form-based, no special rendering needed
+                break;
             case 'review':
                 renderReview();
                 break;
@@ -274,9 +302,10 @@
         if (!container) return;
 
         const today = new Date().toISOString().split('T')[0];
-        const todaySchedule = userData.schedule.filter(item => 
-            item.date === today
-        ).sort((a, b) => a.startTime.localeCompare(b.startTime));
+        const scheduleArray = userData?.schedule || [];
+        const todaySchedule = scheduleArray.filter(item => 
+            item && item.date === today
+        ).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
 
         if (todaySchedule.length === 0) {
             container.innerHTML = '<p class="text-muted">No scheduled study blocks for today.</p>';
@@ -285,8 +314,8 @@
 
         container.innerHTML = todaySchedule.map(item => `
             <div class="schedule-item">
-                <div class="schedule-time">${formatTime(item.startTime)} - ${formatTime(item.endTime)}</div>
-                <div class="schedule-subject">${escapeHtml(item.subject)}</div>
+                <div class="schedule-time">${formatTime(item.startTime || '00:00')} - ${formatTime(item.endTime || '00:00')}</div>
+                <div class="schedule-subject">${escapeHtml(item.subject || 'Untitled')}</div>
             </div>
         `).join('');
     }
@@ -296,7 +325,8 @@
         const container = document.getElementById('activeGoals');
         if (!container) return;
 
-        const activeGoals = userData.goals.filter(g => g.status === 'active').slice(0, 3);
+        const goalsArray = userData?.goals || [];
+        const activeGoals = goalsArray.filter(g => g && g.status === 'active').slice(0, 3);
 
         if (activeGoals.length === 0) {
             container.innerHTML = '<p class="text-muted">No active goals. Create one to get started!</p>';
@@ -306,11 +336,11 @@
         container.innerHTML = activeGoals.map(goal => `
             <div class="goal-item-preview">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <strong>${escapeHtml(goal.title)}</strong>
-                    <span style="font-size: 0.875rem; color: var(--text-muted);">${goal.progress}%</span>
+                    <strong>${escapeHtml(goal.title || 'Untitled Goal')}</strong>
+                    <span style="font-size: 0.875rem; color: var(--text-muted);">${goal.progress || 0}%</span>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${goal.progress}%"></div>
+                    <div class="progress-fill" style="width: ${goal.progress || 0}%"></div>
                 </div>
             </div>
         `).join('');
@@ -320,15 +350,17 @@
     function updateDashboardStats() {
         // Pomodoro count today
         const today = new Date().toISOString().split('T')[0];
-        const todaySessions = userData.pomodoroSessions.filter(s => 
-            s.date.startsWith(today)
+        const sessionsArray = userData?.pomodoroSessions || [];
+        const todaySessions = sessionsArray.filter(s => 
+            s && s.date && s.date.startsWith(today)
         );
         const pomodoroCount = document.getElementById('pomodoroCount');
         if (pomodoroCount) pomodoroCount.textContent = todaySessions.length;
 
         // Tasks completed today
-        const completedToday = userData.tasks.filter(t => 
-            t.completed && t.completedDate && t.completedDate.startsWith(today)
+        const tasksArray = userData?.tasks || [];
+        const completedToday = tasksArray.filter(t => 
+            t && t.completed && t.completedDate && t.completedDate.startsWith(today)
         );
         const tasksCompleted = document.getElementById('tasksCompleted');
         if (tasksCompleted) tasksCompleted.textContent = completedToday.length;
@@ -336,7 +368,8 @@
         // Energy level
         const energyLevel = document.getElementById('energyLevel');
         if (energyLevel) {
-            const latestEnergy = userData.analytics.energyLevels[userData.analytics.energyLevels.length - 1];
+            const energyLevels = userData?.analytics?.energyLevels || [];
+            const latestEnergy = energyLevels[energyLevels.length - 1];
             energyLevel.textContent = latestEnergy ? latestEnergy.level : 'High';
         }
     }
@@ -1112,6 +1145,299 @@
         }
         
         return insights;
+    }
+
+    // ===========================
+    // AI Study Planner
+    // ===========================
+    function setupAIPlannerListeners() {
+        const aiPlannerForm = document.getElementById('aiPlannerForm');
+        const generatePlanBtn = document.getElementById('generatePlanBtn');
+        const exportPlanBtn = document.getElementById('exportPlanBtn');
+        const applyPlanBtn = document.getElementById('applyPlanBtn');
+
+        if (aiPlannerForm) {
+            aiPlannerForm.addEventListener('submit', handleAIPlannerSubmit);
+        }
+
+        if (generatePlanBtn) {
+            generatePlanBtn.addEventListener('click', () => {
+                // Scroll to form
+                document.getElementById('aiPlannerForm').scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        if (exportPlanBtn) {
+            exportPlanBtn.addEventListener('click', exportAIPlan);
+        }
+
+        if (applyPlanBtn) {
+            applyPlanBtn.addEventListener('click', applyAIPlanToSchedule);
+        }
+    }
+
+    async function handleAIPlannerSubmit(e) {
+        e.preventDefault();
+
+        // Get form data
+        const subjects = document.getElementById('aiSubjects').value;
+        const hoursPerDay = document.getElementById('aiHoursPerDay').value;
+        const studyDuration = document.getElementById('aiStudyDuration').value;
+        const peakTime = document.getElementById('aiPeakTime').value;
+        const mainGoal = document.getElementById('aiMainGoal').value;
+        const challenges = document.getElementById('aiChallenges').value;
+
+        // Gather user analytics
+        const analytics = gatherUserAnalytics();
+
+        // Show loading
+        document.getElementById('aiPlanLoading').style.display = 'block';
+        document.getElementById('aiPlanOutput').style.display = 'none';
+
+        // Scroll to loading
+        document.getElementById('aiPlanLoading').scrollIntoView({ behavior: 'smooth' });
+
+        try {
+            // Generate AI plan
+            const plan = await generateAIStudyPlan({
+                subjects,
+                hoursPerDay: parseInt(hoursPerDay),
+                studyDuration,
+                peakTime,
+                mainGoal,
+                challenges,
+                analytics
+            });
+
+            // Display plan
+            displayAIPlan(plan);
+
+            // Save to userData
+            if (!userData.aiPlans) userData.aiPlans = [];
+            userData.aiPlans.push({
+                id: Date.now().toString(),
+                createdAt: new Date().toISOString(),
+                plan,
+                applied: false
+            });
+            saveUserData();
+
+        } catch (error) {
+            console.error('AI Plan generation error:', error);
+            alert('Failed to generate plan. Please try again.');
+        } finally {
+            document.getElementById('aiPlanLoading').style.display = 'none';
+        }
+    }
+
+    function gatherUserAnalytics() {
+        const today = new Date();
+        const last7Days = [];
+        
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            last7Days.push(date.toISOString().split('T')[0]);
+        }
+
+        // Calculate study stats
+        const sessionsArray = userData?.pomodoroSessions || [];
+        const recentSessions = sessionsArray.filter(s => 
+            s && s.date && last7Days.some(d => s.date.startsWith(d))
+        );
+
+        const totalStudyMinutes = recentSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+        const avgSessionsPerDay = recentSessions.length / 7;
+
+        // Task completion
+        const tasksArray = userData?.tasks || [];
+        const completedTasks = tasksArray.filter(t => t && t.completed).length;
+        const totalTasks = tasksArray.length;
+        const completionRate = totalTasks > 0 ? (completedTasks / totalTasks * 100).toFixed(0) : 0;
+
+        // Active goals
+        const goalsArray = userData?.goals || [];
+        const activeGoals = goalsArray.filter(g => g && g.status === 'active');
+
+        return {
+            totalStudyMinutes,
+            avgSessionsPerDay: avgSessionsPerDay.toFixed(1),
+            completionRate,
+            activeGoalsCount: activeGoals.length,
+            streak: calculateStreak(),
+            hasData: sessionsArray.length > 0
+        };
+    }
+
+    async function generateAIStudyPlan(params) {
+        const { subjects, hoursPerDay, studyDuration, peakTime, mainGoal, challenges, analytics } = params;
+
+        // Build prompt for Claude
+        const prompt = `You are an expert study coach helping a high school student create an optimized study plan.
+
+**Student Information:**
+- Subjects: ${subjects}
+- Available study time: ${hoursPerDay} hours per day
+- Preferred session length: ${studyDuration}
+- Peak productivity time: ${peakTime}
+- Main goal: ${mainGoal}
+${challenges ? `- Challenges/Preferences: ${challenges}` : ''}
+
+**Current Performance Data:**
+${analytics.hasData ? `
+- Average study sessions per day: ${analytics.avgSessionsPerDay}
+- Task completion rate: ${analytics.completionRate}%
+- Current study streak: ${analytics.streak} days
+- Active goals: ${analytics.activeGoalsCount}
+` : '- No previous study data available (this is a new user)'}
+
+**Your Task:**
+Create a comprehensive, personalized study plan that includes:
+
+1. **Weekly Schedule Overview**: Specific time blocks for each subject
+2. **Daily Routine**: Morning, afternoon, and evening study blocks with breaks
+3. **Subject Prioritization**: Which subjects to focus on and when
+4. **Study Techniques**: Specific methods for each subject (active recall, spaced repetition, practice problems, etc.)
+5. **Break Strategy**: When and how long to take breaks
+6. **Progress Tracking**: How to measure improvement
+7. **Motivation Tips**: Practical advice to stay consistent
+
+Make it actionable, specific, and realistic for a high school student. Use markdown formatting with headers, bullet points, and bold text for emphasis.`;
+
+        // Call Claude API
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 4000,
+                messages: [
+                    { role: 'user', content: prompt }
+                ]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate AI plan');
+        }
+
+        const data = await response.json();
+        
+        // Extract text from response
+        const planText = data.content
+            .filter(block => block.type === 'text')
+            .map(block => block.text)
+            .join('\n');
+
+        return planText;
+    }
+
+    function displayAIPlan(plan) {
+        const output = document.getElementById('aiPlanOutput');
+        const content = document.getElementById('aiPlanContent');
+
+        if (!output || !content) return;
+
+        // Convert markdown-style formatting to HTML
+        let htmlPlan = plan
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/^# (.+?)(<br>|$)/gm, '<h2>$1</h2>')
+            .replace(/^## (.+?)(<br>|$)/gm, '<h3>$1</h3>')
+            .replace(/^### (.+?)(<br>|$)/gm, '<h4>$1</h4>')
+            .replace(/^- (.+?)(<br>|$)/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+        content.innerHTML = htmlPlan;
+        output.style.display = 'block';
+
+        // Scroll to output
+        output.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function exportAIPlan() {
+        const content = document.getElementById('aiPlanContent');
+        if (!content) return;
+
+        const planText = content.innerText;
+        const blob = new Blob([planText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `AI-Study-Plan-${new Date().toISOString().split('T')[0]}.txt`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    function applyAIPlanToSchedule() {
+        if (!confirm('This will add AI-suggested study blocks to your schedule. Continue?')) {
+            return;
+        }
+
+        // Extract schedule blocks from AI plan
+        // This is a simplified version - in production, you'd parse the plan more intelligently
+        const subjects = document.getElementById('aiSubjects').value.split(',').map(s => s.trim());
+        const hoursPerDay = parseInt(document.getElementById('aiHoursPerDay').value);
+        const peakTime = document.getElementById('aiPeakTime').value;
+
+        // Generate sample schedule blocks
+        const today = new Date();
+        const blocksAdded = [];
+
+        for (let day = 0; day < 7; day++) {
+            const currentDate = new Date(today);
+            currentDate.setDate(today.getDate() + day);
+            const dateStr = currentDate.toISOString().split('T')[0];
+
+            // Add 2-3 study blocks per day
+            const blocksPerDay = Math.min(subjects.length, Math.ceil(hoursPerDay / 1.5));
+            
+            for (let i = 0; i < blocksPerDay && i < subjects.length; i++) {
+                const startHour = getOptimalStartHour(peakTime, i);
+                const startTime = `${startHour.toString().padStart(2, '0')}:00`;
+                const endHour = startHour + 1;
+                const endTime = `${endHour.toString().padStart(2, '0')}:30`;
+
+                const scheduleItem = {
+                    id: Date.now().toString() + '-' + day + '-' + i,
+                    subject: subjects[i % subjects.length],
+                    date: dateStr,
+                    startTime,
+                    endTime,
+                    notes: 'AI-generated study block',
+                    createdAt: new Date().toISOString()
+                };
+
+                userData.schedule.push(scheduleItem);
+                blocksAdded.push(scheduleItem);
+            }
+        }
+
+        saveUserData();
+        
+        alert(`Added ${blocksAdded.length} study blocks to your schedule! Go to Schedule section to view.`);
+        
+        // Navigate to schedule
+        navigateToSection('schedule');
+    }
+
+    function getOptimalStartHour(peakTime, blockIndex) {
+        const timeMap = {
+            'early-morning': [6, 7, 8],
+            'morning': [9, 10, 11],
+            'afternoon': [14, 15, 16],
+            'evening': [18, 19, 20],
+            'night': [21, 22, 23]
+        };
+
+        const hours = timeMap[peakTime] || [9, 10, 11];
+        return hours[blockIndex % hours.length];
     }
 
     // ===========================
