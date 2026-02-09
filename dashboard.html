@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - StudyMaster</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <span>StudyMaster</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#schedule" class="nav-item" data-section="schedule">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Schedule</span>
+            </a>
+            <a href="#goals" class="nav-item" data-section="goals">
+                <i class="fas fa-bullseye"></i>
+                <span>Goals</span>
+            </a>
+            <a href="#matrix" class="nav-item" data-section="matrix">
+                <i class="fas fa-th-large"></i>
+                <span>Task Matrix</span>
+            </a>
+            <a href="#pomodoro" class="nav-item" data-section="pomodoro">
+                <i class="fas fa-hourglass-half"></i>
+                <span>Pomodoro</span>
+            </a>
+            <a href="#flashcards" class="nav-item" data-section="flashcards">
+                <i class="fas fa-layer-group"></i>
+                <span>Flashcards</span>
+            </a>
+            <a href="#analytics" class="nav-item" data-section="analytics">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#review" class="nav-item" data-section="review">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Weekly Review</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="avatar" id="userAvatar">JD</div>
+                <div class="user-info">
+                    <p class="user-name" id="userName">John Doe</p>
+                    <p class="user-streak">🔥 <span id="streakCount">0</span> day streak</p>
+                </div>
+            </div>
+            <button class="btn-outline btn-small" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="top-bar-right">
+                <button class="icon-btn" id="themeToggle" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="icon-btn" id="notificationsBtn" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+                <button class="icon-btn" id="settingsBtn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section id="dashboardSection" class="content-section active">
+            <div class="dashboard-grid">
+                <!-- Welcome Card -->
+                <div class="card welcome-card">
+                    <h2>Welcome back, <span id="welcomeName">Student</span>! 👋</h2>
+                    <p class="motivational-quote" id="dailyQuote">
+                        "Success is the sum of small efforts repeated day in and day out."
+                    </p>
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" data-section="pomodoro">
+                            <i class="fas fa-play"></i> Start Pomodoro
+                        </button>
+                        <button class="quick-action-btn" data-section="schedule">
+                            <i class="fas fa-calendar-plus"></i> Add Study Block
+                        </button>
+                        <button class="quick-action-btn" data-section="goals">
+                            <i class="fas fa-plus"></i> New Goal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Today's Schedule -->
+                <div class="card schedule-preview">
+                    <div class="card-header">
+                        <h3><i class="fas fa-calendar-day"></i> Today's Schedule</h3>
+                        <button class="btn-link" data-section="schedule">View All</button>
+                    </div>
+                    <div id="todaySchedule" class="schedule-list">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="card stats-card">
+                    <h3>Today's Progress</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <p class="stat-value" id="pomodoroCount">0</p>
+                                <p class="stat-label">Pomodoros</p>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-tasks"></i>
+                            <div>
+                                <p class="stat-value" id="tasksCompleted">0</p>
+                                <p class="stat-label">Tasks Done</p>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-battery-three-quarters"></i>
+                            <div>
+                                <p class="stat-value" id="energyLevel">High</p>
+                                <p class="stat-label">Energy</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Goals -->
+                <div class="card goals-preview">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bullseye"></i> Active Goals</h3>
+                        <button class="btn-link" data-section="goals">Manage</button>
+                    </div>
+                    <div id="activeGoals" class="goals-list">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Schedule Section -->
+        <section id="scheduleSection" class="content-section">
+            <div class="section-header">
+                <h2>Study Schedule</h2>
+                <button class="btn-primary" id="addScheduleBtn">
+                    <i class="fas fa-plus"></i> Add Study Block
+                </button>
+            </div>
+            
+            <div class="schedule-container">
+                <div class="calendar-header">
+                    <button class="btn-outline btn-small" id="prevWeek">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h3 id="currentWeek">This Week</h3>
+                    <button class="btn-outline btn-small" id="nextWeek">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Goals Section -->
+        <section id="goalsSection" class="content-section">
+            <div class="section-header">
+                <h2>SMART Goals</h2>
+                <button class="btn-primary" id="addGoalBtn">
+                    <i class="fas fa-plus"></i> Create Goal
+                </button>
+            </div>
+            
+            <div class="goals-container">
+                <div class="goals-filter">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="active">Active</button>
+                    <button class="filter-btn" data-filter="completed">Completed</button>
+                </div>
+                <div id="goalsList" class="goals-list-full">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Eisenhower Matrix Section -->
+        <section id="matrixSection" class="content-section">
+            <div class="section-header">
+                <h2>Eisenhower Matrix</h2>
+                <button class="btn-primary" id="addTaskBtn">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </div>
+            
+            <div class="matrix-grid">
+                <div class="matrix-quadrant urgent-important">
+                    <div class="quadrant-header">
+                        <h3>Do First</h3>
+                        <p>Urgent & Important</p>
+                    </div>
+                    <div class="task-list" data-quadrant="urgent-important">
+                        <!-- Tasks added here -->
+                    </div>
+                </div>
+                <div class="matrix-quadrant not-urgent-important">
+                    <div class="quadrant-header">
+                        <h3>Schedule</h3>
+                        <p>Not Urgent & Important</p>
+                    </div>
+                    <div class="task-list" data-quadrant="not-urgent-important">
+                        <!-- Tasks added here -->
+                    </div>
+                </div>
+                <div class="matrix-quadrant urgent-not-important">
+                    <div class="quadrant-header">
+                        <h3>Delegate</h3>
+                        <p>Urgent & Not Important</p>
+                    </div>
+                    <div class="task-list" data-quadrant="urgent-not-important">
+                        <!-- Tasks added here -->
+                    </div>
+                </div>
+                <div class="matrix-quadrant not-urgent-not-important">
+                    <div class="quadrant-header">
+                        <h3>Eliminate</h3>
+                        <p>Not Urgent & Not Important</p>
+                    </div>
+                    <div class="task-list" data-quadrant="not-urgent-not-important">
+                        <!-- Tasks added here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pomodoro Section -->
+        <section id="pomodoroSection" class="content-section">
+            <div class="pomodoro-container">
+                <div class="pomodoro-timer">
+                    <h2>Pomodoro Timer</h2>
+                    <div class="timer-display">
+                        <div class="timer-circle">
+                            <svg class="timer-ring" width="300" height="300">
+                                <circle cx="150" cy="150" r="140" class="timer-ring-background"></circle>
+                                <circle cx="150" cy="150" r="140" class="timer-ring-progress" id="timerRing"></circle>
+                            </svg>
+                            <div class="timer-text">
+                                <span id="timerMinutes">25</span>:<span id="timerSeconds">00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timer-label" id="timerLabel">Focus Time</div>
+                    <div class="timer-controls">
+                        <button class="btn-large btn-primary" id="startTimer">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button class="btn-large btn-outline" id="resetTimer">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                    <div class="timer-settings">
+                        <div class="setting-group">
+                            <label>Focus Duration</label>
+                            <select id="focusDuration">
+                                <option value="15">15 minutes</option>
+                                <option value="25" selected>25 minutes</option>
+                                <option value="30">30 minutes</option>
+                                <option value="45">45 minutes</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label>Break Duration</label>
+                            <select id="breakDuration">
+                                <option value="5" selected>5 minutes</option>
+                                <option value="10">10 minutes</option>
+                                <option value="15">15 minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="pomodoro-stats">
+                    <h3>Session Statistics</h3>
+                    <div class="session-stats">
+                        <div class="session-stat">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <p class="stat-value" id="todaySessions">0</p>
+                                <p class="stat-label">Today</p>
+                            </div>
+                        </div>
+                        <div class="session-stat">
+                            <i class="fas fa-calendar-week"></i>
+                            <div>
+                                <p class="stat-value" id="weekSessions">0</p>
+                                <p class="stat-label">This Week</p>
+                            </div>
+                        </div>
+                        <div class="session-stat">
+                            <i class="fas fa-fire"></i>
+                            <div>
+                                <p class="stat-value" id="sessionStreak">0</p>
+                                <p class="stat-label">Day Streak</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recent-sessions">
+                        <h4>Recent Sessions</h4>
+                        <div id="recentSessionsList">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flashcards Section -->
+        <section id="flashcardsSection" class="content-section">
+            <div class="section-header">
+                <h2>Spaced Repetition Flashcards</h2>
+                <button class="btn-primary" id="addDeckBtn">
+                    <i class="fas fa-plus"></i> New Deck
+                </button>
+            </div>
+            
+            <div class="flashcards-container">
+                <div class="decks-grid" id="decksList">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analyticsSection" class="content-section">
+            <h2>Productivity Analytics</h2>
+            
+            <div class="analytics-grid">
+                <div class="card analytics-card">
+                    <h3>Study Time This Week</h3>
+                    <canvas id="weeklyStudyChart"></canvas>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Task Completion Rate</h3>
+                    <canvas id="completionChart"></canvas>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Energy Levels</h3>
+                    <canvas id="energyChart"></canvas>
+                </div>
+                <div class="card analytics-card">
+                    <h3>Insights & Recommendations</h3>
+                    <div id="insightsList" class="insights-list">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Review Section -->
+        <section id="reviewSection" class="content-section">
+            <div class="review-container">
+                <div class="card review-card">
+                    <h2>Weekly Review & Planning</h2>
+                    <p>Reflect on your week and plan for success ahead.</p>
+                    
+                    <form id="weeklyReviewForm">
+                        <div class="form-group">
+                            <label>What went well this week?</label>
+                            <textarea id="wentWell" rows="3" placeholder="List your wins and accomplishments..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>What could be improved?</label>
+                            <textarea id="improvements" rows="3" placeholder="Challenges and areas for growth..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>How would you rate your productivity? (1-10)</label>
+                            <input type="range" id="productivityRating" min="1" max="10" value="7">
+                            <span class="range-value" id="productivityValue">7</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Goals for next week</label>
+                            <textarea id="nextWeekGoals" rows="3" placeholder="What do you want to achieve?"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary btn-large">
+                            Save Review & Generate Plan
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="card past-reviews">
+                    <h3>Past Reviews</h3>
+                    <div id="pastReviewsList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="scheduleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Study Block</h3>
+                <button class="modal-close" data-modal="scheduleModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="scheduleForm">
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="scheduleSubject" required>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="scheduleDate" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" id="scheduleStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" id="scheduleEnd" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="scheduleNotes" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn-primary btn-full">Add to Schedule</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="goalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create SMART Goal</h3>
+                <button class="modal-close" data-modal="goalModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="goalForm">
+                <div class="form-group">
+                    <label>Goal Title</label>
+                    <input type="text" id="goalTitle" required placeholder="e.g., Achieve 90% in Math">
+                </div>
+                <div class="form-group">
+                    <label>Specific Description</label>
+                    <textarea id="goalDescription" rows="2" required placeholder="What exactly do you want to achieve?"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Deadline</label>
+                        <input type="date" id="goalDeadline" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="goalPriority" required>
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary btn-full">Create Goal</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Task to Matrix</h3>
+                <button class="modal-close" data-modal="taskModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label>Task</label>
+                    <input type="text" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Quadrant</label>
+                    <select id="taskQuadrant" required>
+                        <option value="urgent-important">Urgent & Important (Do First)</option>
+                        <option value="not-urgent-important">Not Urgent & Important (Schedule)</option>
+                        <option value="urgent-not-important">Urgent & Not Important (Delegate)</option>
+                        <option value="not-urgent-not-important">Not Urgent & Not Important (Eliminate)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary btn-full">Add Task</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="deckModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Flashcard Deck</h3>
+                <button class="modal-close" data-modal="deckModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="deckForm">
+                <div class="form-group">
+                    <label>Deck Name</label>
+                    <input type="text" id="deckName" required placeholder="e.g., Chemistry Formulas">
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="deckSubject" required placeholder="e.g., Chemistry">
+                </div>
+                <button type="submit" class="btn-primary btn-full">Create Deck</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
