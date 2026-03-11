@@ -162,9 +162,27 @@
         // Mobile menu toggle
         const mobileToggle = document.getElementById('mobileMenuToggle');
         const sidebar = document.getElementById('sidebar');
-        if (mobileToggle) {
+        if (mobileToggle && sidebar) {
             mobileToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('active');
+            });
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                    }
+                }
+            });
+            
+            // Close sidebar when clicking a nav item on mobile
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('active');
+                    }
+                });
             });
         }
 
@@ -1272,66 +1290,196 @@
     async function generateAIStudyPlan(params) {
         const { subjects, hoursPerDay, studyDuration, peakTime, mainGoal, challenges, analytics } = params;
 
-        // Build prompt for Claude
-        const prompt = `You are an expert study coach helping a high school student create an optimized study plan.
-
-**Student Information:**
-- Subjects: ${subjects}
-- Available study time: ${hoursPerDay} hours per day
-- Preferred session length: ${studyDuration}
-- Peak productivity time: ${peakTime}
-- Main goal: ${mainGoal}
-${challenges ? `- Challenges/Preferences: ${challenges}` : ''}
-
-**Current Performance Data:**
-${analytics.hasData ? `
-- Average study sessions per day: ${analytics.avgSessionsPerDay}
-- Task completion rate: ${analytics.completionRate}%
-- Current study streak: ${analytics.streak} days
-- Active goals: ${analytics.activeGoalsCount}
-` : '- No previous study data available (this is a new user)'}
-
-**Your Task:**
-Create a comprehensive, personalized study plan that includes:
-
-1. **Weekly Schedule Overview**: Specific time blocks for each subject
-2. **Daily Routine**: Morning, afternoon, and evening study blocks with breaks
-3. **Subject Prioritization**: Which subjects to focus on and when
-4. **Study Techniques**: Specific methods for each subject (active recall, spaced repetition, practice problems, etc.)
-5. **Break Strategy**: When and how long to take breaks
-6. **Progress Tracking**: How to measure improvement
-7. **Motivation Tips**: Practical advice to stay consistent
-
-Make it actionable, specific, and realistic for a high school student. Use markdown formatting with headers, bullet points, and bold text for emphasis.`;
-
-        // Call Claude API
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 4000,
-                messages: [
-                    { role: 'user', content: prompt }
-                ]
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to generate AI plan');
-        }
-
-        const data = await response.json();
+        // Client-side AI Study Plan Generator
+        // No API needed - uses smart algorithms based on learning science
         
-        // Extract text from response
-        const planText = data.content
-            .filter(block => block.type === 'text')
-            .map(block => block.text)
-            .join('\n');
-
-        return planText;
+        const subjectsArray = subjects.split(',').map(s => s.trim());
+        
+        // Calculate session length based on preference
+        const sessionMinutes = {
+            'short': 30,
+            'medium': 60,
+            'long': 90
+        }[studyDuration] || 60;
+        
+        // Peak time mapping
+        const peakHours = {
+            'early-morning': '6:00-8:00 AM',
+            'morning': '8:00 AM-12:00 PM',
+            'afternoon': '12:00-5:00 PM',
+            'evening': '5:00-9:00 PM',
+            'night': '9:00 PM-12:00 AM'
+        }[peakTime] || '9:00 AM-12:00 PM';
+        
+        // Generate personalized plan
+        let plan = `# 🎯 Your Personalized Study Plan\n\n`;
+        plan += `Generated on: ${new Date().toLocaleDateString()}\n\n`;
+        
+        // Overview Section
+        plan += `## 📊 Overview\n\n`;
+        plan += `**Subjects:** ${subjects}\n`;
+        plan += `**Daily Study Time:** ${hoursPerDay} hours\n`;
+        plan += `**Session Length:** ${sessionMinutes} minutes\n`;
+        plan += `**Peak Productivity:** ${peakHours}\n`;
+        plan += `**Main Goal:** ${mainGoal.replace('-', ' ')}\n\n`;
+        
+        if (analytics.hasData) {
+            plan += `**Your Current Stats:**\n`;
+            plan += `- Study streak: ${analytics.streak} days 🔥\n`;
+            plan += `- Avg sessions/day: ${analytics.avgSessionsPerDay}\n`;
+            plan += `- Task completion: ${analytics.completionRate}%\n\n`;
+        }
+        
+        // Weekly Schedule
+        plan += `## 📅 Weekly Schedule\n\n`;
+        
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const sessionsPerDay = Math.floor((hoursPerDay * 60) / (sessionMinutes + 10)); // +10 for breaks
+        
+        days.forEach((day, dayIndex) => {
+            plan += `### ${day}\n\n`;
+            
+            // Distribute subjects across days
+            for (let i = 0; i < Math.min(sessionsPerDay, subjectsArray.length); i++) {
+                const subject = subjectsArray[(dayIndex + i) % subjectsArray.length];
+                const startHour = getOptimalStartHour(peakTime, i);
+                const endMinutes = sessionMinutes;
+                const endHour = Math.floor((startHour * 60 + endMinutes) / 60);
+                const endMin = (startHour * 60 + endMinutes) % 60;
+                
+                plan += `**${startHour}:00 - ${endHour}:${endMin.toString().padStart(2, '0')}** — ${subject}\n`;
+            }
+            plan += `\n`;
+        });
+        
+        // Study Techniques by Subject
+        plan += `## 💡 Study Techniques by Subject\n\n`;
+        
+        const techniques = {
+            'math': 'Practice problems (5-10 per session), create formula flashcards, explain solutions aloud, work through textbook examples',
+            'mathematics': 'Practice problems (5-10 per session), create formula flashcards, explain solutions aloud, work through textbook examples',
+            'physics': 'Draw diagrams for each concept, connect to real-world examples, work problem sets, use online simulations',
+            'chemistry': 'Create molecular models, practice balancing equations, use periodic table actively, lab work review',
+            'biology': 'Diagram biological processes, create concept maps, use flashcards for terminology, practice past papers',
+            'english': 'Active reading with annotations, summarize each chapter, practice essays, analyze literary devices',
+            'history': 'Create timelines, use mnemonics for dates, make connection maps, practice essay questions',
+            'language': 'Daily vocabulary practice, speak/write regularly, use language apps, watch media in target language',
+            'computer science': 'Code daily projects, debug systematically, explain concepts to others, build real applications',
+            'default': 'Use active recall, teach concepts to others, practice past papers, create summary notes'
+        };
+        
+        subjectsArray.forEach(subject => {
+            const key = subject.toLowerCase();
+            const technique = techniques[key] || techniques['default'];
+            plan += `**${subject}:**\n${technique}\n\n`;
+        });
+        
+        // Break Strategy
+        plan += `## ☕ Break Strategy\n\n`;
+        plan += `After each ${sessionMinutes}-minute study session:\n`;
+        plan += `- Take a 5-10 minute break\n`;
+        plan += `- Move away from your desk\n`;
+        plan += `- Hydrate and stretch\n`;
+        plan += `- Avoid screens during breaks\n\n`;
+        plan += `After every 2-3 sessions, take a longer 15-30 minute break.\n\n`;
+        
+        // Recommendations based on goal
+        plan += `## 🎯 Personalized Recommendations\n\n`;
+        
+        if (mainGoal === 'exam-prep') {
+            plan += `**Exam Preparation Focus:**\n`;
+            plan += `- Practice past papers daily\n`;
+            plan += `- Focus on weak areas first\n`;
+            plan += `- Create summary sheets\n`;
+            plan += `- Schedule mock exams\n`;
+            plan += `- Review mistakes thoroughly\n\n`;
+        } else if (mainGoal === 'homework') {
+            plan += `**Homework Completion Strategy:**\n`;
+            plan += `- Start with hardest assignments\n`;
+            plan += `- Use timer for accountability\n`;
+            plan += `- Take notes on what you learn\n`;
+            plan += `- Ask for help when stuck\n`;
+            plan += `- Review before submitting\n\n`;
+        } else if (mainGoal === 'understanding') {
+            plan += `**Deep Understanding Approach:**\n`;
+            plan += `- Focus on 'why' not just 'what'\n`;
+            plan += `- Connect concepts across topics\n`;
+            plan += `- Explain concepts in your own words\n`;
+            plan += `- Create mind maps and diagrams\n`;
+            plan += `- Teach concepts to others\n\n`;
+        } else if (mainGoal === 'review') {
+            plan += `**Review & Retention Strategy:**\n`;
+            plan += `- Use spaced repetition (review today, +1 day, +3 days, +1 week)\n`;
+            plan += `- Create flashcards for key concepts\n`;
+            plan += `- Test yourself regularly\n`;
+            plan += `- Summarize from memory\n`;
+            plan += `- Mix subjects for better retention\n\n`;
+        } else {
+            plan += `**Balanced Learning Approach:**\n`;
+            plan += `- Mix different subjects daily\n`;
+            plan += `- Combine theory and practice\n`;
+            plan += `- Regular review sessions\n`;
+            plan += `- Track progress weekly\n`;
+            plan += `- Adjust based on results\n\n`;
+        }
+        
+        // Address challenges
+        if (challenges) {
+            plan += `## 🔧 Addressing Your Challenges\n\n`;
+            plan += `You mentioned: "${challenges}"\n\n`;
+            plan += `**Suggestions:**\n`;
+            
+            if (challenges.toLowerCase().includes('math')) {
+                plan += `- Break math problems into smaller steps\n`;
+                plan += `- Use Khan Academy or similar resources\n`;
+                plan += `- Practice 10 minutes daily minimum\n`;
+            }
+            if (challenges.toLowerCase().includes('focus') || challenges.toLowerCase().includes('distract')) {
+                plan += `- Use website blockers during study\n`;
+                plan += `- Study in quiet environment\n`;
+                plan += `- Use Pomodoro technique strictly\n`;
+            }
+            if (challenges.toLowerCase().includes('motivation') || challenges.toLowerCase().includes('motivat')) {
+                plan += `- Set small daily goals\n`;
+                plan += `- Reward yourself after sessions\n`;
+                plan += `- Study with friends (accountability)\n`;
+                plan += `- Track streaks in StudyMaster\n`;
+            }
+            if (challenges.toLowerCase().includes('visual')) {
+                plan += `- Use diagrams and mind maps\n`;
+                plan += `- Watch educational videos\n`;
+                plan += `- Create colorful summary sheets\n`;
+            }
+            plan += `\n`;
+        }
+        
+        // Progress Tracking
+        plan += `## 📈 Track Your Progress\n\n`;
+        plan += `**Daily:**\n`;
+        plan += `- Complete planned Pomodoro sessions\n`;
+        plan += `- Check off tasks in Task Matrix\n`;
+        plan += `- Log energy levels\n\n`;
+        plan += `**Weekly:**\n`;
+        plan += `- Review analytics in StudyMaster\n`;
+        plan += `- Complete Weekly Review form\n`;
+        plan += `- Adjust plan as needed\n\n`;
+        plan += `**Metrics to watch:**\n`;
+        plan += `- Study streak (aim for 7+ days)\n`;
+        plan += `- Task completion rate (target 80%+)\n`;
+        plan += `- Pomodoro sessions (${Math.ceil(hoursPerDay * 60 / 30)}+ per day)\n\n`;
+        
+        // Motivation
+        plan += `## 🚀 Stay Motivated\n\n`;
+        plan += `- **Start small:** Begin with just 1 hour if ${hoursPerDay} hours feels overwhelming\n`;
+        plan += `- **Build gradually:** Add 15 minutes each week\n`;
+        plan += `- **Celebrate wins:** Acknowledge every completed session\n`;
+        plan += `- **Be flexible:** Adjust the plan if life happens\n`;
+        plan += `- **Stay consistent:** Small daily effort beats occasional marathons\n\n`;
+        plan += `Remember: **Progress, not perfection!** 🌟\n\n`;
+        plan += `---\n\n`;
+        plan += `*Generated by StudyMaster - Your AI Study Companion*\n`;
+        
+        return plan;
     }
 
     function displayAIPlan(plan) {
@@ -1552,6 +1700,7 @@ Make it actionable, specific, and realistic for a high school student. Use markd
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
     }
 
@@ -1559,8 +1708,17 @@ Make it actionable, specific, and realistic for a high school student. Use markd
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('active');
+            document.body.style.overflow = '';
         }
     }
+    
+    // Close modal when clicking outside (on backdrop)
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal') && e.target.classList.contains('active')) {
+            e.target.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
 
     // ===========================
     // Utility Functions
